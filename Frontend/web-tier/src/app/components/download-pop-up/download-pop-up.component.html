@@ -1,0 +1,33 @@
+<h2 *ngIf="concurrent" mat-dialog-title>Number of concurrent requests</h2>
+<mat-dialog-content class="mat-typography">
+    <div class="searchcontainer">
+        <div class="search-part">
+            <form class="example-form">
+                <mat-form-field class="example-full-width" appearance="fill">
+                    <mat-label>Number of Requests</mat-label>
+                    <input type="number" matInput [formControl]="reqNumber" placeholder="2">
+                    <mat-hint>Enter a number between 2 and 100!</mat-hint>
+                </mat-form-field>
+            </form>
+        </div>
+    </div>
+</mat-dialog-content>
+<div mat-dialog-actions align="end">
+    <button mat-flat-button (click)="onNoClick()">Cancel</button>
+    <button mat-flat-button [mat-dialog-close]="upload()" cdkFocusInitial>Upload</button>
+</div>
+
+<h2 *ngIf="!concurrent">Upload a file</h2>
+<mat-dialog-content class="mat-typography">
+    <div class="searchcontainer">
+        <div class="search-part">
+            <input #fileInput hidden="true" type="file" onclick="this.value=null" (change)="select_file($event)" accept=".jpg" />
+            <button mat-flat-button color="primary" (click)="fileInput.click()"><mat-icon>attach_file</mat-icon>Choose Image (JPG)</button>
+            <mat-label style="padding: 1%;">{{(file) ? file.name : "No file uploaded yet."}}</mat-label>
+        </div>
+    </div>
+</mat-dialog-content>
+<div mat-dialog-actions align="end">
+    <button mat-flat-button (click)="onNoClick()">Cancel</button>
+    <button mat-flat-button [mat-dialog-close]="upload()" cdkFocusInitial>Upload</button>
+</div>
