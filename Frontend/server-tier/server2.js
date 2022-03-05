@@ -77,32 +77,34 @@ app.post('/', upload.single('myfile'), function(request, respond) {
     });
 
     //Send classification inside.
-    var params_queue_receive = {
-        QueueUrl: queue_url,
-        MaxNumberOfMessages: 10,
-        VisibilityTimeout: 2,
-        WaitTimeSeconds: 4,
-    };
+    // var params_queue_receive = {
+    //     QueueUrl: queue_url,
+    //     MaxNumberOfMessages: 10,
+    //     VisibilityTimeout: 2,
+    //     WaitTimeSeconds: 4,
+    // };
 
-    function receiveMessages(respond) {
-        sqs.receiveMessage(params_queue_receive, (err, data) => {
-            if (err) console.log(err, err.stack); // an error occurred
-            else {
-                console.log(data);
-                if (data.Messages) {
-                    for (var i = 0; i < data.Messages.length; i++) {
-                        var obj = JSON.parse(data.Messages[i].Body)
-                        if (obj.fileName == request.file.originalname) {
-                            //Pending, delete the message from SQS Queue.
-                            respond.end(obj);
-                        }
-                    }
-                }
+    // function receiveMessages(respond) {
+    //     sqs.receiveMessage(params_queue_receive, (err, data) => {
+    //         if (err) console.log(err, err.stack); // an error occurred
+    //         else {
+    //             console.log(data);
+    //             if (data.Messages) {
+    //                 for (var i = 0; i < data.Messages.length; i++) {
+    //                     var obj = JSON.parse(data.Messages[i].Body)
+    //                     if (obj.fileName == request.file.originalname) {
+    //                         //Pending, delete the message from SQS Queue.
+    //                         respond.end(obj);
+    //                     }
+    //                 }
+    //             }
 
-            }
-        })
-    }
-    setInterval(receiveMessages, 5000, respond)
+    //         }
+    //     })
+    // }
+    // setInterval(receiveMessages, 5000, respond)
+
+    respond.end("uploaded.");
 });
 
 
