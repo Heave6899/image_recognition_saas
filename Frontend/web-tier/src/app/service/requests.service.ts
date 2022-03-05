@@ -11,4 +11,8 @@ export class RequestsService {
   getConcurrentRequests(postJson: any): Observable<any>{
     return this.http.post(this.localUrl + '/script', postJson);
   }
+
+  getResponses(): Observable<any>{
+    return this.http.get(this.localUrl + '/response');
+  }
 }

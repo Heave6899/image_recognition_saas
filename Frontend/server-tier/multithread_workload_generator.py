@@ -28,7 +28,7 @@ def send_one_request(image_path):
         print('sendErr: '+r.url)
     else :       
         
-        image_msg = image_path.split('/')[2] + ' uploaded!'
+        image_msg = image_path.split('/')[1] + ' uploaded!'
         msg = image_msg + '\n' + 'Classification result: ' + r.text
         print(msg)
 

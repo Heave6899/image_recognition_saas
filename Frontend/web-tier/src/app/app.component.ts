@@ -273,14 +273,14 @@ export class AppComponent implements OnInit, OnDestroy {
               QueueUrl: queue_url,
               ReceiptHandle: filteredMessages[i].ReceiptHandle,
             };
-            // try {
-            //   const data = await sqsClient.send(new DeleteMessageCommand(deleteParams));
-            //   this.outputs += '\nMessage deleted' + JSON.stringify(data);
-            //   console.log("Message deleted", data);
-            // } catch (err) {
-            //   this.outputs += '\nError deleting result from queue' + JSON.stringify(err);
-            //   console.log("Error", err);
-            // }
+            try {
+              const data = await sqsClient.send(new DeleteMessageCommand(deleteParams));
+              this.outputs += '\nMessage deleted' + JSON.stringify(data);
+              console.log("Message deleted", data);
+            } catch (err) {
+              this.outputs += '\nError deleting result from queue' + JSON.stringify(err);
+              console.log("Error", err);
+            }
             
           }
         }
@@ -300,6 +300,14 @@ export class AppComponent implements OnInit, OnDestroy {
       console.log("Receive Error", err);
     }
   }
+
+  // async get_requests(grid: any){
+  //   this.requests.getResponses().subscribe(data => {
+  //     var obj = JSON.parse(JSON.parse(data))
+  //     if(grid.filter((x: any) => x.imageId === obj.fileName).length == 0)
+  //     {grid.push({ 'imageSrc': obj.file, 'imageName': obj.fileName, 'imageId': obj.fileName, 'loader': true, status: 'waiting for results..' })}
+  //   })
+  // }
 
   add_to_grid(data: any) {
     console.log(data)

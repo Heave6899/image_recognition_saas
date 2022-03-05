@@ -18,18 +18,20 @@ const credentials = {
 const { spawn } = require('child_process');
 const REGION = "us-east-1";
 const BUCKET_NAME = "cloudcomputinginputs"
-const queue_url = 'https://sqs.us-east-1.amazonaws.com/161689885677/RequestQueue'
-const sessionID = 'e7a09730-88b5-2888-d3a0-e970f6160982'
-    // uploaded images are saved in the folder "/upload_images"
+const request_queue_url = 'https://sqs.us-east-1.amazonaws.com/161689885677/RequestQueue';
+const response_queue_url = 'https://sqs.us-east-1.amazonaws.com/161689885677/ResponseQueue';
+const sessionID = 'e7a09730-88b5-2888-d3a0-e970f6160982';
+// uploaded images are saved in the folder "/upload_images"
 const upload = multer({ dest: __dirname + '/upload_images' });
 const s3 = new AWS.S3({ credentials: credentials, region: REGION });
 const sqs = new AWS.SQS({ credentials: credentials, region: REGION })
 app.use(express.static('public'));
 app.use(express.json())
 app.timeout = 0;
-// "myfile" is the key of the http payload
+var request_list = []
+    // "myfile" is the key of the http payload
 app.post('/', upload.single('myfile'), function(request, respond) {
-    if (request.file) console.log(request.file);
+    // if (request.file) console.log(request.file);
 
     // save the image
     var fs = require('fs');
@@ -55,7 +57,7 @@ app.post('/', upload.single('myfile'), function(request, respond) {
         MessageBody: JSON.stringify(body),
         // MessageDeduplicationId: "TheWhistler",  // Required for FIFO queues
         // MessageGroupId: "Group1",  // Required for FIFO queues
-        QueueUrl: queue_url //SQS_QUEUE_URL; e.g., 'https://sqs.REGION.amazonaws.com/ACCOUNT-ID/QUEUE-NAME'
+        QueueUrl: request_queue_url //SQS_QUEUE_URL; e.g., 'https://sqs.REGION.amazonaws.com/ACCOUNT-ID/QUEUE-NAME'
     };
     // uncomment when limit refreshes
     // s3.putObject(params, function(err, data) {
@@ -68,57 +70,62 @@ app.post('/', upload.single('myfile'), function(request, respond) {
     // console.log(params_queue_send)
 
     sqs.sendMessage(params_queue_send, function(err, data) {
-        // console.log("Done sendMessage")
         if (err) {
-            // console.log("Error", err);
+            console.log("Error", err);
         } else {
             console.log("Success", data.MessageId);
         }
     });
+    request_list[bucketPath] = respond;
 
-    //Send classification inside.
-    // var params_queue_receive = {
-    //     QueueUrl: queue_url,
-    //     MaxNumberOfMessages: 10,
-    //     VisibilityTimeout: 2,
-    //     WaitTimeSeconds: 4,
-    // };
-
-    // function receiveMessages(respond) {
-    //     sqs.receiveMessage(params_queue_receive, (err, data) => {
-    //         if (err) console.log(err, err.stack); // an error occurred
-    //         else {
-    //             console.log(data);
-    //             if (data.Messages) {
-    //                 for (var i = 0; i < data.Messages.length; i++) {
-    //                     var obj = JSON.parse(data.Messages[i].Body)
-    //                     if (obj.fileName == request.file.originalname) {
-    //                         //Pending, delete the message from SQS Queue.
-    //                         respond.end(obj);
-    //                     }
-    //                 }
-    //             }
-
-    //         }
-    //     })
-    // }
-    // setInterval(receiveMessages, 5000, respond)
-
-    respond.end("uploaded.");
 });
 
+function receiveMessages(request_list) {
+    //Send classification inside.
+    var params_queue_receive = {
+        QueueUrl: request_queue_url,
+        MaxNumberOfMessages: 10,
+        VisibilityTimeout: 2,
+        WaitTimeSeconds: 3,
+    };
+    sqs.receiveMessage(params_queue_receive, (err, data) => {
+        console.log(Object.keys(request_list).length, Object.keys(request_list));
+        if (err) console.log(err, err.stack); // an error occurred
+        else {
+            if (data.Messages && Object.keys(request_list).length > 0) {
+                for (var i = 0; i < data.Messages.length; i++) {
+                    var message = data.Messages[i];
+                    var obj = JSON.parse(data.Messages[i].Body)
+                    if (obj.fileName in request_list) {
+                        console.log('yes', typeof request_list[obj.fileName]);
+                        //Pending, delete the message from SQS Queue.
+                        var response = request_list[obj.fileName]
+                        response.end(obj.fileName);
+                        delete request_list[obj.fileName]
+                        var params_queue_delete = {
+                            QueueUrl: response_queue_url,
+                            ReceiptHandle: message.ReceiptHandle
+                        };
+                        sqs.deleteMessage(params_queue_delete, function(err, data) {
+                            err && console.log(err);
+                        });
+                    }
+                }
+            }
+
+        }
+    })
+}
+setInterval(receiveMessages, 5000, request_list)
 
 app.post('/script', (req, res) => {
     var dataToSend;
     var request = req.body
-    console.log(req.body)
     const python = spawn('python3', ['multithread_workload_generator.py', '--num_request', request.number, '--url', 'http://0.0.0.0:3000', '--image_folder', './face_images_100/']);
     python.stdout.on('data', function(data) {
-        console.log('Pipe data from python script ...');
         dataToSend = data.toString();
     });
     python.on('close', (code) => {
-        console.log(`child process close all stdio with code ${code}`);
         // send data to browser
         res.set('Access-Control-Allow-Origin', 'http://localhost:4200');
         res.send(dataToSend)
