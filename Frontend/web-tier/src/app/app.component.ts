@@ -273,14 +273,14 @@ export class AppComponent implements OnInit, OnDestroy {
               QueueUrl: queue_url,
               ReceiptHandle: filteredMessages[i].ReceiptHandle,
             };
-            try {
-              const data = await sqsClient.send(new DeleteMessageCommand(deleteParams));
-              this.outputs += '\nMessage deleted' + JSON.stringify(data);
-              console.log("Message deleted", data);
-            } catch (err) {
-              this.outputs += '\nError deleting result from queue' + JSON.stringify(err);
-              console.log("Error", err);
-            }
+            // try {
+            //   const data = await sqsClient.send(new DeleteMessageCommand(deleteParams));
+            //   this.outputs += '\nMessage deleted' + JSON.stringify(data);
+            //   console.log("Message deleted", data);
+            // } catch (err) {
+            //   this.outputs += '\nError deleting result from queue' + JSON.stringify(err);
+            //   console.log("Error", err);
+            // }
             
           }
         }
